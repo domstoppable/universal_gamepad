@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 pysdl2 = "*"
+pyside2 = "*"
 
 [dev-packages]
 

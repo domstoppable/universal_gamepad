@@ -5,6 +5,7 @@ from PySide2.QtGui import *
 from PySide2.QtWidgets import *
 
 from .gamepad import Button, Axis
+from . import locateAsset
 
 class Stick():
 	def __init__(self, basePosition, radius, color, *args, **kwargs):
@@ -69,9 +70,7 @@ class ControllerWidget(QLabel):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 
-		imageFile = 'gamepad/assets/controller.svg'
-
-		self.document = ET.parse(imageFile)
+		self.document = ET.parse(locateAsset('controller.svg'))
 
 		for button in Button:
 			self.setButtonState(button, False)

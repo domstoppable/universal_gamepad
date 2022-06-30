@@ -5,11 +5,11 @@ import time
 
 from PySide2.QtCore import *
 
-from gamepad.eventDaemon import *
-from gamepad.gamepad import *
+from universal_gamepad.eventDaemon import *
+from universal_gamepad.gamepad import *
 
 def log(info):
-	print(f'{int(time.time())}: {info}')
+	print(f'{float(time.time()):0.3f}: {info}')
 
 def onPadConnected(pad):
 	log(f'{pad.id} Pad connected')
@@ -17,24 +17,15 @@ def onPadConnected(pad):
 	pad.buttonPressed.connect(lambda button=None, pad=pad: log(f'{pad.id} Pressed  {button}'))
 	pad.buttonReleased.connect(lambda button=None, pad=pad: log(f'{pad.id} Released {button}'))
 	pad.axisChanged.connect(lambda axis=None, value=None, pad=pad: log(f'{pad.id} axis {axis} = {value}'))
-	pad.disconnected.connect(lambda pad=pad: log(f'{pad.id} disconnected'))
-
-def checkInterrupt():
-	try:
-		pass
-	except KeyboardInterrupt:
-		app.quit()
 
 
 app = QCoreApplication()
 daemon = GamepadDaemon()
+daemon.quitOnKeyboardInterrupt = True
 daemon.gamepadConnected.connect(onPadConnected)
+daemon.gamepadDisconnected.connect(lambda pad: log(f'{pad.id} disconnected'))
 
 daemon.start()
-
-timer = QTimer()
-timer.timeout.connect(checkInterrupt)
-timer.start(500)
 
 app.exec_()
 daemon.stop()

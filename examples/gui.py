@@ -1,8 +1,8 @@
 from PySide2.QtWidgets import *
 
-from gamepad.eventDaemon import *
-from gamepad.gamepad import *
-from gamepad.ui import ControllerWidget
+from universal_gamepad.eventDaemon import *
+from universal_gamepad.gamepad import *
+from universal_gamepad.ui import ControllerWidget
 
 padWidgets = {}
 

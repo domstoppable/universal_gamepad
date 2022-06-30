@@ -40,6 +40,7 @@ class GamepadDaemon(QObject):
 		self.workerPoller = QTimer()
 		self.workerPoller.timeout.connect(self.pollWorker)
 		self.setFps(200)
+		self.quitOnKeyboardInterrupt = False
 
 	def setFps(self, fps):
 		self.workerPoller.setInterval(1000//fps)
@@ -75,8 +76,12 @@ class GamepadDaemon(QObject):
 		self.daemon.join(timeout)
 
 	def pollWorker(self):
-		while not self.fromWorkerQueue.empty():
-			self.onSdlEvent(self.fromWorkerQueue.get())
+		try:
+			while not self.fromWorkerQueue.empty():
+				self.onSdlEvent(self.fromWorkerQueue.get())
+		except KeyboardInterrupt:
+			if self.quitOnKeyboardInterrupt:
+				QCoreApplication.instance().quit()
 
 def daemonMain(inputQueue, outputQueue):
 	SDL_Init(SDL_INIT_JOYSTICK)
@@ -84,31 +89,34 @@ def daemonMain(inputQueue, outputQueue):
 	running = True
 
 	while running:
-		event = SDL_Event()
+		try:
+			event = SDL_Event()
+			while SDL_PollEvent(ctypes.byref(event)) != 0:
+				if event.type == SDL_QUIT:
+					running = False
+					break
+				else:
+					# SDL events won't serialize, but the event field (e.g., event.jdevice) will
+					if event.type in sdlEventTypeObjectMap:
+						eventField = getattr(event, sdlEventTypeObjectMap[event.type])
 
-		while SDL_PollEvent(ctypes.byref(event)) != 0:
-			if event.type == SDL_QUIT:
-				running = False
-				break
-			else:
-				# SDL events won't serialize, but the event field (e.g., event.jdevice) will
-				if event.type in sdlEventTypeObjectMap:
-					eventField = getattr(event, sdlEventTypeObjectMap[event.type])
+						# also, we have to open the device to receive events from it
+						if event.type == SDL_JOYDEVICEADDED:
+							joystick = SDL_JoystickOpen(event.jdevice.which)
+							# jdevice.which is the index, but every other .which is the instanceID
+							setattr(eventField, 'instanceID', SDL_JoystickInstanceID(joystick))
+						else:
+							setattr(eventField, 'instanceID', eventField.which)
 
-					# also, we have to open the device to receive events from it
-					if event.type == SDL_JOYDEVICEADDED:
-						joystick = SDL_JoystickOpen(event.jdevice.which)
-						# jdevice.which is the index, but every other .which is the instanceID
-						setattr(eventField, 'instanceID', SDL_JoystickInstanceID(joystick))
-					else:
-						setattr(eventField, 'instanceID', eventField.which)
+						outputQueue.put(eventField)
+						event = SDL_Event()
 
-					outputQueue.put(eventField)
-					event = SDL_Event()
+			while not inputQueue.empty():
+				event = inputQueue.get()
+				if event == 'quit':
+					running = False
+				else:
+					print('daemon thread unknown event:', event)
 
-		while not inputQueue.empty():
-			event = inputQueue.get()
-			if event == 'quit':
-				running = False
-			else:
-				print('daemon thread unknown event:', event)
+		except KeyboardInterrupt:
+			pass
