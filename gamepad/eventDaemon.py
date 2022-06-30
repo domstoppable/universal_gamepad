@@ -1,4 +1,4 @@
-import threading
+import multiprocessing as mp
 
 from PySide2.QtCore import *
 
@@ -8,6 +8,15 @@ from sdl2 import *
 from .gamepad import Gamepad
 
 _instance = None
+
+sdlEventTypeObjectMap = {
+	SDL_JOYDEVICEADDED:'jdevice',
+	SDL_JOYDEVICEREMOVED:'jdevice',
+	SDL_JOYBUTTONDOWN:'jbutton',
+	SDL_JOYBUTTONUP:'jbutton',
+	SDL_JOYHATMOTION:'jhat',
+	SDL_JOYAXISMOTION:'jaxis',
+}
 
 def daemon():
 	global _instance
@@ -24,81 +33,82 @@ class GamepadDaemon(QObject):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 
-		self.workerThread = DaemonThread()
-		self.workerThread.sdlEvent.connect(self.onSdlEvent)
+		self.toWorkerQueue = mp.Queue()
+		self.fromWorkerQueue = mp.Queue()
+		self.daemon = mp.Process(target=daemonMain, args=(self.toWorkerQueue, self.fromWorkerQueue), daemon=True)
 
-	def onSdlEvent(self, event, joystickInstanceID=None):
+		self.workerPoller = QTimer()
+		self.workerPoller.timeout.connect(self.pollWorker)
+		self.setFps(200)
+
+	def setFps(self, fps):
+		self.workerPoller.setInterval(1000//fps)
+
+	def onSdlEvent(self, event):
+		pad = Gamepad.getGamepad(event.instanceID)
 		if event.type == SDL_JOYDEVICEADDED:
-			pad = Gamepad.getGamepad(joystickInstanceID)
 			pad.onConnected()
-
 			self.gamepadConnected.emit(pad)
 
 		if event.type == SDL_JOYDEVICEREMOVED:
-			pad = Gamepad.getGamepad(event.jdevice.which)
 			pad.onDisconnected()
-
 			self.gamepadDisconnected.emit(pad)
 
 		elif event.type == SDL_JOYBUTTONDOWN:
-			pad = Gamepad.getGamepad(event.jbutton.which)
-			pad.onButtonPressed(event.jbutton.button)
+			pad.onButtonPressed(event.button)
 
 		elif event.type == SDL_JOYBUTTONUP:
-			pad = Gamepad.getGamepad(event.jbutton.which)
-			pad.onButtonReleased(event.jbutton.button)
+			pad.onButtonReleased(event.button)
 
 		elif event.type == SDL_JOYHATMOTION:
-			pad = Gamepad.getGamepad(event.jhat.which)
-			pad.onHatChanged(event.jhat.hat, event.jhat.value)
+			pad.onHatChanged(event.hat, event.value)
 
 		elif event.type == SDL_JOYAXISMOTION:
-			pad = Gamepad.getGamepad(event.jaxis.which)
-			pad.onAxisChanged(event.jaxis.axis, event.jaxis.value)
+			pad.onAxisChanged(event.axis, event.value)
 
 	def start(self):
-		self.workerThread.start()
+		self.workerPoller.start()
+		self.daemon.start()
 
-	def stop(self, timeout=3000):
-		self.workerThread.stop()
-		self.workerThread.wait(timeout)
+	def stop(self, timeout=3):
+		self.toWorkerQueue.put('quit')
+		self.daemon.join(timeout)
 
+	def pollWorker(self):
+		while not self.fromWorkerQueue.empty():
+			self.onSdlEvent(self.fromWorkerQueue.get())
 
-class DaemonThread(QThread):
-	sdlEvent = Signal(object, object)
-	_shutdown = Signal()
+def daemonMain(inputQueue, outputQueue):
+	SDL_Init(SDL_INIT_JOYSTICK)
 
-	def __init__(self, *args, **kwargs):
-		super().__init__(*args, **kwargs)
-		self._shutdown.connect(self.onShutdownRequested)
+	running = True
 
-	def stop(self):
-		self._shutdown.emit()
+	while running:
+		event = SDL_Event()
 
-	def onShutdownRequested(self):
-		self.running = False
+		while SDL_PollEvent(ctypes.byref(event)) != 0:
+			if event.type == SDL_QUIT:
+				running = False
+				break
+			else:
+				# SDL events won't serialize, but the event field (e.g., event.jdevice) will
+				if event.type in sdlEventTypeObjectMap:
+					eventField = getattr(event, sdlEventTypeObjectMap[event.type])
 
-	def run(self):
-		SDL_Init(SDL_INIT_JOYSTICK)
-
-		self.running = True
-
-		while self.running:
-			event = SDL_Event()
-
-			while SDL_PollEvent(ctypes.byref(event)) != 0:
-				if event.type == SDL_QUIT:
-					running = False
-					break
-				else:
-					instanceID = None
+					# also, we have to open the device to receive events from it
 					if event.type == SDL_JOYDEVICEADDED:
 						joystick = SDL_JoystickOpen(event.jdevice.which)
-						instanceID = SDL_JoystickInstanceID(joystick)
+						# jdevice.which is the index, but every other .which is the instanceID
+						setattr(eventField, 'instanceID', SDL_JoystickInstanceID(joystick))
+					else:
+						setattr(eventField, 'instanceID', eventField.which)
 
-					elif event.type in [SDL_JOYDEVICEREMOVED,SDL_JOYBUTTONDOWN,SDL_JOYBUTTONUP,SDL_JOYHATMOTION,SDL_JOYAXISMOTION]:
-						instanceID = event.jdevice.which
+					outputQueue.put(eventField)
+					event = SDL_Event()
 
-					if instanceID is not None:
-						self.sdlEvent.emit(event, instanceID)
-						event = SDL_Event()
+		while not inputQueue.empty():
+			event = inputQueue.get()
+			if event == 'quit':
+				running = False
+			else:
+				print('daemon thread unknown event:', event)
