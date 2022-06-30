@@ -6,6 +6,7 @@ import ctypes
 from sdl2 import *
 
 from .gamepad import Gamepad
+from . import locateAsset
 
 _instance = None
 
@@ -88,6 +89,13 @@ def daemonMain(inputQueue, outputQueue):
 
 	running = True
 
+	mappingsFile = open(locateAsset('extra-mappings.txt'), 'r')
+	for line in mappingsFile:
+		if not line.startswith('#'):
+			print('add mapping', line)
+			line_ctype = ctypes.c_char_p(line.encode())
+			SDL_GameControllerAddMapping(line_ctype)
+
 	while running:
 		try:
 			event = SDL_Event()
@@ -105,6 +113,9 @@ def daemonMain(inputQueue, outputQueue):
 							joystick = SDL_JoystickOpen(event.jdevice.which)
 							# jdevice.which is the index, but every other .which is the instanceID
 							setattr(eventField, 'instanceID', SDL_JoystickInstanceID(joystick))
+
+							mapping = SDL_GameControllerMappingForGUID(SDL_JoystickGetGUID(joystick))
+							print('use mapping:', mapping)
 						else:
 							setattr(eventField, 'instanceID', eventField.which)
 
