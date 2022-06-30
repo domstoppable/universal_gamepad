@@ -26,22 +26,26 @@ def onPadDisconnected(pad):
 		if window.layout().count() == 0:
 			window.layout().addWidget(pluginLabel)
 
-app = QApplication()
+if __name__ == '__main__':
+	import multiprocessing as mp
+	mp.freeze_support()
 
-window = QWidget()
-window.setLayout(QHBoxLayout())
+	app = QApplication()
 
-pluginLabel = QLabel('Please connect a controller')
-pluginLabel.setAlignment(Qt.AlignHCenter|Qt.AlignVCenter)
-pluginLabel.setMargin(200)
-window.layout().addWidget(pluginLabel)
+	window = QWidget()
+	window.setLayout(QHBoxLayout())
 
-daemon = GamepadDaemon()
-daemon.gamepadConnected.connect(onPadConnected)
-daemon.gamepadDisconnected.connect(onPadDisconnected)
-daemon.start()
+	pluginLabel = QLabel('Please connect a controller')
+	pluginLabel.setAlignment(Qt.AlignHCenter|Qt.AlignVCenter)
+	pluginLabel.setMargin(200)
+	window.layout().addWidget(pluginLabel)
 
-app.aboutToQuit.connect(daemon.stop)
+	daemon = GamepadDaemon()
+	daemon.gamepadConnected.connect(onPadConnected)
+	daemon.gamepadDisconnected.connect(onPadDisconnected)
+	daemon.start()
 
-window.show()
-app.exec_()
+	app.aboutToQuit.connect(daemon.stop)
+
+	window.show()
+	app.exec_()

@@ -19,13 +19,17 @@ def onPadConnected(pad):
 	pad.axisChanged.connect(lambda axis=None, value=None, pad=pad: log(f'{pad.id} axis {axis} = {value}'))
 
 
-app = QCoreApplication()
-daemon = GamepadDaemon()
-daemon.quitOnKeyboardInterrupt = True
-daemon.gamepadConnected.connect(onPadConnected)
-daemon.gamepadDisconnected.connect(lambda pad: log(f'{pad.id} disconnected'))
+if __name__ == '__main__':
+	import multiprocessing as mp
+	mp.freeze_support()
 
-daemon.start()
+	app = QCoreApplication()
+	daemon = GamepadDaemon()
+	daemon.quitOnKeyboardInterrupt = True
+	daemon.gamepadConnected.connect(onPadConnected)
+	daemon.gamepadDisconnected.connect(lambda pad: log(f'{pad.id} disconnected'))
 
-app.exec_()
-daemon.stop()
+	daemon.start()
+
+	app.exec_()
+	daemon.stop()
