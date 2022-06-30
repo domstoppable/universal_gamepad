@@ -40,6 +40,18 @@ class Axis(Enum):
 	#DPAD_X = auto()
 	#DPAD_Y = auto()
 
+	def isStick(self):
+		return self.isHorizontal() or self.isVertical()
+
+	def isTrigger(self):
+		return self.name.endswith('_TRIGGER')
+
+	def isHorizontal(self):
+		return self.name.endswith('_X')
+
+	def isVertical(self):
+		return self.name.endswith('_Y')
+
 hatBitMap = [
 	Button.UP,
 	Button.RIGHT,
