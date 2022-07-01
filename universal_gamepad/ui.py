@@ -43,7 +43,7 @@ class Trigger():
 		self.vertScale = 0
 
 	def setValue(self, value):
-		self.vertScale = (value+1)/2
+		self.vertScale = value
 
 	def drawRect(self, painter, scale, color):
 		width = int(self.baseSize[0])

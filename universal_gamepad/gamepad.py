@@ -177,10 +177,3 @@ class Gamepad(QObject):
 			return self.axisMap[sdlAxis]
 		else:
 			return sdlAxis
-
-def getGUID(joystick):
-    buffer = ctypes.create_string_buffer(33)
-    guid = SDL_JoystickGetGUID(joystick)
-    SDL_JoystickGetGUIDString(guid, buffer, 33)
-
-    return buffer.value.decode('utf8')
