@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 pysdl2 = "*"
 pyside2 = "*"
+pysdl2-dll = "*"
 
 [dev-packages]
 
