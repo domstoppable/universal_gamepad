@@ -11,12 +11,11 @@ from . import locateAsset
 _instance = None
 
 sdlEventTypeObjectMap = {
-	SDL_JOYDEVICEADDED:'jdevice',
-	SDL_JOYDEVICEREMOVED:'jdevice',
-	SDL_JOYBUTTONDOWN:'jbutton',
-	SDL_JOYBUTTONUP:'jbutton',
-	SDL_JOYHATMOTION:'jhat',
-	SDL_JOYAXISMOTION:'jaxis',
+	SDL_CONTROLLERDEVICEADDED:   'cdevice',
+	SDL_CONTROLLERDEVICEREMOVED: 'cdevice',
+	SDL_CONTROLLERAXISMOTION:    'caxis',
+	SDL_CONTROLLERBUTTONDOWN:    'cbutton',
+	SDL_CONTROLLERBUTTONUP:      'cbutton',
 }
 
 def daemon():
@@ -48,24 +47,21 @@ class GamepadDaemon(QObject):
 
 	def onSdlEvent(self, event):
 		pad = Gamepad.getGamepad(event.instanceID)
-		if event.type == SDL_JOYDEVICEADDED:
+		if event.type == SDL_CONTROLLERDEVICEADDED:
 			pad.onConnected()
 			self.gamepadConnected.emit(pad)
 
-		if event.type == SDL_JOYDEVICEREMOVED:
+		if event.type == SDL_CONTROLLERDEVICEREMOVED:
 			pad.onDisconnected()
 			self.gamepadDisconnected.emit(pad)
 
-		elif event.type == SDL_JOYBUTTONDOWN:
+		elif event.type == SDL_CONTROLLERBUTTONDOWN:
 			pad.onButtonPressed(event.button)
 
-		elif event.type == SDL_JOYBUTTONUP:
+		elif event.type == SDL_CONTROLLERBUTTONUP:
 			pad.onButtonReleased(event.button)
 
-		elif event.type == SDL_JOYHATMOTION:
-			pad.onHatChanged(event.hat, event.value)
-
-		elif event.type == SDL_JOYAXISMOTION:
+		elif event.type == SDL_CONTROLLERAXISMOTION:
 			pad.onAxisChanged(event.axis, event.value)
 
 	def start(self):
@@ -84,22 +80,33 @@ class GamepadDaemon(QObject):
 			if self.quitOnKeyboardInterrupt:
 				QCoreApplication.instance().quit()
 
+def setHint(hint, value):
+	SDL_SetHint(hint, ctypes.c_char_p(value.encode()))
+
 def daemonMain(inputQueue, outputQueue):
-	SDL_Init(SDL_INIT_JOYSTICK)
+	sdlVersion = SDL_version()
+	SDL_GetVersion(ctypes.byref(sdlVersion))
+	print(f'SDL Version = {sdlVersion.major}.{sdlVersion.minor}.{sdlVersion.patch}')
+
+	setHint(SDL_HINT_JOYSTICK_HIDAPI_JOY_CONS, "1")
+	setHint(SDL_HINT_JOYSTICK_HIDAPI_PS4_RUMBLE, "1")
+	setHint(SDL_HINT_JOYSTICK_HIDAPI_PS5_RUMBLE, "1")
+	setHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1")
+
+	SDL_Init(SDL_INIT_VIDEO|SDL_INIT_GAMECONTROLLER)
 
 	running = True
 
 	mappingsFile = open(locateAsset('extra-mappings.txt'), 'r')
 	for line in mappingsFile:
 		if not line.startswith('#'):
-			print('add mapping', line)
 			line_ctype = ctypes.c_char_p(line.encode())
 			SDL_GameControllerAddMapping(line_ctype)
 
 	while running:
 		try:
 			event = SDL_Event()
-			while SDL_PollEvent(ctypes.byref(event)) != 0:
+			while SDL_WaitEventTimeout(ctypes.byref(event), 1000) != 0:
 				if event.type == SDL_QUIT:
 					running = False
 					break
@@ -108,14 +115,10 @@ def daemonMain(inputQueue, outputQueue):
 					if event.type in sdlEventTypeObjectMap:
 						eventField = getattr(event, sdlEventTypeObjectMap[event.type])
 
-						# also, we have to open the device to receive events from it
-						if event.type == SDL_JOYDEVICEADDED:
-							joystick = SDL_JoystickOpen(event.jdevice.which)
-							# jdevice.which is the index, but every other .which is the instanceID
+						if event.type == SDL_CONTROLLERDEVICEADDED:
+							controller = SDL_GameControllerOpen(eventField.which)
+							joystick = SDL_GameControllerGetJoystick(controller)
 							setattr(eventField, 'instanceID', SDL_JoystickInstanceID(joystick))
-
-							mapping = SDL_GameControllerMappingForGUID(SDL_JoystickGetGUID(joystick))
-							print('use mapping:', mapping)
 						else:
 							setattr(eventField, 'instanceID', eventField.which)
 
