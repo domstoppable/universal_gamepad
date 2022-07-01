@@ -31,6 +31,7 @@ if __name__ == '__main__':
 	mp.freeze_support()
 
 	app = QApplication()
+	app.setApplicationName("Universal Gamepad Tester")
 
 	window = QWidget()
 	window.setLayout(QHBoxLayout())
