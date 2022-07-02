@@ -30,10 +30,10 @@
      inkscape:pagecheckerboard="true"
      showgrid="false"
      inkscape:document-rotation="0"
-     inkscape:current-layer="layer3"
+     inkscape:current-layer="layer1"
      inkscape:document-units="px"
-     inkscape:cy="434.86548"
-     inkscape:cx="713.14165"
+     inkscape:cy="434.86546"
+     inkscape:cx="713.14162"
      inkscape:zoom="1.060098"
      inkscape:pageshadow="2"
      inkscape:pageopacity="0.0"
@@ -124,10 +124,15 @@
        y="35.041962"
        inkscape:label="RIGHT_TRIGGER-pressed" />
     <path
-       id="PADDLE_1"
+       id="TOUCHPAD"
        style="color:#000000;fill:#cccccc;stroke:none;stroke-width:4"
        d="M 290.10127,152.98609 300.2751,274.9315 c 0.053,9.33823 7.64747,16.90237 16.99807,16.90237 h 183.15444 c 9.38806,0 16.23087,-7.69014 16.99415,-16.83792 l 10.1797,-122.00986 h -2.17772 z"
-       inkscape:label="PADDLE_1" />
+       inkscape:label="TOUCHPAD" />
+    <path
+       id="TOUCHPAD-pressed"
+       style="color:#000000;fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:4;-inkscape-stroke:none"
+       d="M 290.10127,152.98609 300.2751,274.9315 c 0.053,9.33823 7.64747,16.90237 16.99807,16.90237 h 183.15444 c 9.38806,0 16.23087,-7.69014 16.99415,-16.83792 l 10.1797,-122.00986 h -2.17772 z"
+       inkscape:label="TOUCHPAD-pressed" />
     <rect
        style="fill:#cccccc;fill-opacity:1;stroke:none;stroke-width:16.3455;paint-order:stroke markers fill"
        id="rect2060"
@@ -353,11 +358,6 @@
        rx="12"
        ry="12"
        inkscape:label="RIGHT_SHOULDER-pressed" />
-    <path
-       id="PADDLE_1-pressed"
-       style="color:#000000;fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:4;-inkscape-stroke:none"
-       d="M 290.10127,152.98609 300.2751,274.9315 c 0.053,9.33823 7.64747,16.90237 16.99807,16.90237 h 183.15444 c 9.38806,0 16.23087,-7.69014 16.99415,-16.83792 l 10.1797,-122.00986 h -2.17772 z"
-       inkscape:label="PADDLE_1-pressed" />
     <rect
        style="fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:16.3455;paint-order:stroke markers fill"
        id="MISC_1-pressed"
