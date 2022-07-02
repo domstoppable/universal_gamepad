@@ -83,8 +83,11 @@ class ControllerWidget(QLabel):
 		self.updateImage()
 
 		self.paintTimer = QTimer()
-		self.paintTimer.setInterval(1000//60)
 		self.paintTimer.timeout.connect(self.refreshDisplay)
+		self.setFPS(60)
+
+	def setFPS(self, fps):
+		self.paintTimer.setInterval(1000//fps)
 
 	def showEvent(self, showEvent):
 		super().showEvent(showEvent)
