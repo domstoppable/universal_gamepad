@@ -41,7 +41,7 @@ if __name__ == '__main__':
 	pluginLabel.setMargin(200)
 	window.layout().addWidget(pluginLabel)
 
-	daemon = GamepadDaemon()
+	daemon = getGamepadDaemon()
 	daemon.gamepadConnected.connect(onPadConnected)
 	daemon.gamepadDisconnected.connect(onPadDisconnected)
 	daemon.start()

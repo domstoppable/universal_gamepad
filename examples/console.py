@@ -24,7 +24,7 @@ if __name__ == '__main__':
 	mp.freeze_support()
 
 	app = QCoreApplication()
-	daemon = GamepadDaemon()
+	daemon = getGamepadDaemon()
 	daemon.quitOnKeyboardInterrupt = True
 	daemon.gamepadConnected.connect(onPadConnected)
 	daemon.gamepadDisconnected.connect(lambda pad: log(f'{pad.id} disconnected'))

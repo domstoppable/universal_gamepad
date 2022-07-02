@@ -18,7 +18,7 @@ sdlEventTypeObjectMap = {
 	SDL_CONTROLLERBUTTONUP:      'cbutton',
 }
 
-def daemon():
+def getGamepadDaemon():
 	global _instance
 
 	if _instance is None:
