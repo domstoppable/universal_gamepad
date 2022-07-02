@@ -83,9 +83,11 @@ class Gamepad(QObject):
 		super().__init__(*args, **kwargs)
 
 		self.id = id
-		self.sdl_joystick = None
 		self.mapHatEventsToDpad = True
 		self.hatValues = []
+
+		self.buttonValues = { button:False for button in Button }
+		self.axisValues = { axis:0.0 for axis in Axis }
 
 		self.buttonMap = {
 			SDL_CONTROLLER_BUTTON_A: Button.SOUTH,
@@ -129,10 +131,12 @@ class Gamepad(QObject):
 
 	def onButtonPressed(self, sdlButton):
 		button = self.mapButton(sdlButton)
+		self.buttonValues[button] = True
 		self.buttonPressed.emit(button)
 
 	def onButtonReleased(self, sdlButton):
 		button = self.mapButton(sdlButton)
+		self.buttonValues[button] = False
 		self.buttonReleased.emit(button)
 
 	def onAxisChanged(self, sdlAxis, sdlValue):
@@ -140,6 +144,7 @@ class Gamepad(QObject):
 		value = sdlValue / 32767
 		value = max(min(value, 1.0), -1.0)
 
+		self.axisValues[axis] = value
 		self.axisChanged.emit(axis, value)
 
 	def onHatChanged(self, hatIdx, value):
@@ -177,3 +182,13 @@ class Gamepad(QObject):
 			return self.axisMap[sdlAxis]
 		else:
 			return sdlAxis
+
+	def isPressed(self, *buttons):
+		for button in buttons:
+			if not self.buttonValues[button]:
+				return False
+
+		return True
+
+	def axisValue(self, axis):
+		return self.axisValues[axis]

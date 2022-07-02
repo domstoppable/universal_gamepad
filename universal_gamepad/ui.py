@@ -72,8 +72,8 @@ class ControllerWidget(QLabel):
 
 		self.document = ET.parse(locateAsset('controller.svg'))
 
-		for button in Button:
-			self.setButtonState(button, False)
+		self.boundPad = None
+		self.stale = True
 
 		self.stickAmplitude = 30
 
@@ -84,7 +84,7 @@ class ControllerWidget(QLabel):
 
 		self.paintTimer = QTimer()
 		self.paintTimer.setInterval(1000//60)
-		self.paintTimer.timeout.connect(self.updateImage)
+		self.paintTimer.timeout.connect(self.refreshDisplay)
 
 	def showEvent(self, showEvent):
 		super().showEvent(showEvent)
@@ -119,6 +119,19 @@ class ControllerWidget(QLabel):
 				[float(node.get('width')), float(node.get('height'))],
 				Qt.red,
 			)
+
+	def refreshDisplay(self):
+		if not self.stale:
+			return
+
+		if self.boundPad is not None:
+			for button in Button:
+				self.setButtonState(button, self.boundPad.isPressed(button))
+
+			for axis in Axis:
+				self.setAxisValue(axis, self.boundPad.axisValue(axis))
+
+		self.updateImage()
 
 	def updateImage(self):
 		pixmap = QPixmap()
@@ -174,6 +187,10 @@ class ControllerWidget(QLabel):
 			self.sticks[side].render(painter)
 
 	def bindToGamepad(self, gamepad):
-		gamepad.buttonPressed.connect(lambda button: self.setButtonState(button, True))
-		gamepad.buttonReleased.connect(lambda button: self.setButtonState(button, False))
-		gamepad.axisChanged.connect(lambda axis, value: self.setAxisValue(axis, value))
+		self.boundPad = gamepad
+		gamepad.buttonPressed.connect(lambda button: self.markStale())
+		gamepad.buttonReleased.connect(lambda button: self.markStale())
+		gamepad.axisChanged.connect(lambda axis, value: self.markStale())
+
+	def markStale(self):
+		self.stale = True
