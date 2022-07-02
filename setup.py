@@ -10,5 +10,5 @@ setup(
 	author_email='dom@dominiccanare.com',
 	url='https://github.com/domstoppable/universal_gamepad',
 	packages=['universal_gamepad',],
-	install_requires=[ 'PySide2', 'pysdl2' ],
+	install_requires=[ 'PySide2', 'pysdl2', 'pysdl2-dll', ],
 )
