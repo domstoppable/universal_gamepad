@@ -97,11 +97,14 @@ def daemonMain(inputQueue, outputQueue):
 
 	running = True
 
-	mappingsFile = open(locateAsset('extra-mappings.txt'), 'r')
-	for line in mappingsFile:
-		if not line.startswith('#'):
-			line_ctype = ctypes.c_char_p(line.encode())
-			SDL_GameControllerAddMapping(line_ctype)
+	try:
+		mappingsFile = open(locateAsset('extra-mappings.txt'), 'r')
+		for line in mappingsFile:
+			if not line.startswith('#'):
+				line_ctype = ctypes.c_char_p(line.encode())
+				SDL_GameControllerAddMapping(line_ctype)
+	except:
+		pass
 
 	while running:
 		try:
