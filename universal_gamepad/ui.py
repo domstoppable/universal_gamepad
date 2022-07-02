@@ -82,6 +82,18 @@ class ControllerWidget(QLabel):
 
 		self.updateImage()
 
+		self.paintTimer = QTimer()
+		self.paintTimer.setInterval(1000//60)
+		self.paintTimer.timeout.connect(self.updateImage)
+
+	def showEvent(self, showEvent):
+		super().showEvent(showEvent)
+		self.paintTimer.start()
+
+	def hideEvent(self, hideEvent):
+		super().hideEvent(hideEvent)
+		self.paintTimer.stop()
+
 	def cloneSticks(self):
 		self.sticks = {}
 		for side in ['LEFT', 'RIGHT']:
@@ -120,7 +132,6 @@ class ControllerWidget(QLabel):
 		node = self.getElementById(f'{button.name}-pressed')
 		if node is not None:
 			node.set('visibility', '' if pressed else 'hidden')
-			self.updateImage()
 
 	def setAxisValue(self, axis, value):
 		side = 'LEFT' if axis.name.startswith('LEFT') else 'RIGHT'
@@ -131,8 +142,6 @@ class ControllerWidget(QLabel):
 				self.sticks[side].setVerticalOffset(value*self.stickAmplitude)
 		else:
 			self.triggers[side].setValue(value)
-
-		self.repaint()
 
 	def getElementById(self, nodeID):
 		return self.document.find(f".//*[@id='{nodeID}']")

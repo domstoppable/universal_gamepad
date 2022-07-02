@@ -47,22 +47,23 @@ class GamepadDaemon(QObject):
 
 	def onSdlEvent(self, event):
 		pad = Gamepad.getGamepad(event.instanceID)
-		if event.type == SDL_CONTROLLERDEVICEADDED:
-			pad.onConnected()
-			self.gamepadConnected.emit(pad)
+		if pad is not None:
+			if event.type == SDL_CONTROLLERDEVICEADDED:
+				pad.onConnected()
+				self.gamepadConnected.emit(pad)
 
-		if event.type == SDL_CONTROLLERDEVICEREMOVED:
-			pad.onDisconnected()
-			self.gamepadDisconnected.emit(pad)
+			elif event.type == SDL_CONTROLLERDEVICEREMOVED:
+				pad.onDisconnected()
+				self.gamepadDisconnected.emit(pad)
 
-		elif event.type == SDL_CONTROLLERBUTTONDOWN:
-			pad.onButtonPressed(event.button)
+			elif event.type == SDL_CONTROLLERBUTTONDOWN:
+				pad.onButtonPressed(event.button)
 
-		elif event.type == SDL_CONTROLLERBUTTONUP:
-			pad.onButtonReleased(event.button)
+			elif event.type == SDL_CONTROLLERBUTTONUP:
+				pad.onButtonReleased(event.button)
 
-		elif event.type == SDL_CONTROLLERAXISMOTION:
-			pad.onAxisChanged(event.axis, event.value)
+			elif event.type == SDL_CONTROLLERAXISMOTION:
+				pad.onAxisChanged(event.axis, event.value)
 
 	def start(self):
 		self.workerPoller.start()
