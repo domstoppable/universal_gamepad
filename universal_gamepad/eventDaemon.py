@@ -1,4 +1,6 @@
+import sys
 import multiprocessing as mp
+import logging
 
 from PySide2.QtCore import *
 
@@ -87,7 +89,7 @@ def setHint(hint, value):
 def daemonMain(inputQueue, outputQueue):
 	sdlVersion = SDL_version()
 	SDL_GetVersion(ctypes.byref(sdlVersion))
-	print(f'SDL Version = {sdlVersion.major}.{sdlVersion.minor}.{sdlVersion.patch}')
+	logging.debug(f'SDL Version = {sdlVersion.major}.{sdlVersion.minor}.{sdlVersion.patch}')
 
 	setHint(SDL_HINT_JOYSTICK_HIDAPI_JOY_CONS, "1")
 	setHint(SDL_HINT_JOYSTICK_HIDAPI_PS4_RUMBLE, "1")
@@ -134,7 +136,7 @@ def daemonMain(inputQueue, outputQueue):
 				if event == 'quit':
 					running = False
 				else:
-					print('daemon thread unknown event:', event)
+					print(f'Gamepad daemon received unknown event {event}', file=sys.stderr)
 
 		except KeyboardInterrupt:
 			pass
