@@ -14,5 +14,5 @@ setup(
 		'universal_gamepad': ['universal_gamepad/assets/*'],
 	},
 	include_package_data=True,
-	install_requires=[ 'PySide2', 'pysdl2', 'pysdl2-dll', ],
+	install_requires=[ 'PySide2', 'pysdl2', ],
 )
