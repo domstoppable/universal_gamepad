@@ -83,6 +83,8 @@ class Gamepad(QObject):
 		super().__init__(*args, **kwargs)
 
 		self.id = id
+		self.guid = ''
+
 		self.mapHatEventsToDpad = True
 		self.hatValues = []
 
@@ -122,6 +124,9 @@ class Gamepad(QObject):
 			SDL_CONTROLLER_AXIS_RIGHTY: Axis.RIGHT_Y,
 			SDL_CONTROLLER_AXIS_TRIGGERRIGHT: Axis.RIGHT_TRIGGER,
 		}
+
+	def setGuid(self, guid):
+		self.guid = guid
 
 	def onConnected(self):
 		self.connected.emit()
